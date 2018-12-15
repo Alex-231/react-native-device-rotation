@@ -1,7 +1,6 @@
-
 {
   "name": "react-native-device-rotation",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -10,7 +9,7 @@
   "keywords": [
     "react-native"
   ],
-  "author": "",
+  "author": "Alex Newark",
   "license": "",
   "peerDependencies": {
     "react-native": "^0.41.2"
