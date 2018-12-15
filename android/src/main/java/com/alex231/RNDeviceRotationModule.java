@@ -20,13 +20,19 @@ public class RNDeviceRotationModule extends ReactContextBaseJavaModule implement
   private final ReactApplicationContext reactContext;
   private final SensorManager mSensorManager;
   private final Sensor mAccelerometer;
+  private final Sensor mGeomagneticSensor;
   private float[] mGravity, mGeomagnetic;
 
   public RNDeviceRotationModule(ReactApplicationContext reactContext) {
     super(reactContext);
     mSensorManager = (SensorManager)reactContext.getSystemService(reactContext.SENSOR_SERVICE);
     mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+    mGeomagneticSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
     this.reactContext = reactContext;
+    inactive = false;
+    reactContext.addLifecycleEventListener(this);
+    mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+    mSensorManager.registerListener(this, mGeomagneticSensor, SensorManager.SENSOR_DELAY_NORMAL);
   }
 
   @Override
@@ -34,7 +40,7 @@ public class RNDeviceRotationModule extends ReactContextBaseJavaModule implement
     return "RNDeviceRotation";
   }
 
-  boolean inactive = true;
+  boolean inactive;
   float azimut, pitch, roll;
 
   @ReactMethod
@@ -51,21 +57,15 @@ public class RNDeviceRotationModule extends ReactContextBaseJavaModule implement
   }
 
   private void sendRotatioChangedEvent() {
-    getReactApplicationContext().getJSModule(RCTDeviceEventEmitter.class)
+    reactContext.getJSModule(RCTDeviceEventEmitter.class)
             .emit("deviceRotationDidChange", getRotationMap());
-  }
-
-  @Override
-  public void initialize() {
-    inactive = false;
-    getReactApplicationContext().addLifecycleEventListener(this);
-    mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
   }
 
   @Override
   public void onHostResume() {
     inactive = false;
     mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+    mSensorManager.registerListener(this, mGeomagneticSensor, SensorManager.SENSOR_DELAY_NORMAL);
   }
 
   @Override
@@ -79,6 +79,7 @@ public class RNDeviceRotationModule extends ReactContextBaseJavaModule implement
     mSensorManager.unregisterListener(this);
   }
 
+  @Override
   public void onSensorChanged(SensorEvent event) {
     if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
       mGravity = event.values;
